@@ -48,11 +48,11 @@ class HTTPClient(object):
         return None
 
     def get_code(self, data):
-        # print "CODE", data.split(" ")[1], "END"
-        return data.split(" ")[1]
+        # print "*****CODE", data.split(" ")[1], "END"
+        return int(data.split(" ")[1])
 
     def get_headers(self,data):
-        # todo: add to this
+        # todo: add stuff to this
         return None
 
     def get_body(self, data):
@@ -91,8 +91,19 @@ class HTTPClient(object):
         except Exception:
             potential_port = None
 
+        if parsed_url.path == "":
+            path = "/"
+        else:
+            path = parsed_url.path
+
+        try:
+            potential_port = parsed_url.port
+        except Exception:
+            potential_port = None
+
         # assuming http and not https
-        if parsed_url.port is None:
+
+        if potential_port is None:
             line1 = "GET " + path + " HTTP/1.1\r\n"
             line2 = "Host: " + parsed_url.hostname + "\r\n"
             line3 = "Accept: */*\r\n"
@@ -100,7 +111,7 @@ class HTTPClient(object):
             port = 80
         else:
             line1 = "GET " + path + " HTTP/1.1\r\n"
-            line2 = "Host: " + parsed_url.hostname + ":" + str(parsed_url.port) + "\r\n"
+            line2 = "Host: " + parsed_url.hostname + ":" + str(potential_port) + "\r\n"
             line3 = "Accept: */*\r\n"
             line4 = "Connection: close\r\n\r\n"
             port = potential_port
@@ -108,6 +119,7 @@ class HTTPClient(object):
         request = line1 + line2 + line3 + line4
 
         self.connect(parsed_url.hostname, port)
+
         self.sendall(request)
 
         # received = b""
@@ -123,6 +135,11 @@ class HTTPClient(object):
 
         # print("sent:", request, "end")
         # print("received:", received, "end")
+
+
+        # print "\n==========sent:", request, "end"
+        # print "\n==========received:", received, "end"
+
 
         code = self.get_code(received)
         body = self.get_body(received)
@@ -148,7 +165,7 @@ class HTTPClient(object):
             content = ""
             content_length = "0"
         else:
-            content = urllib.parse.urlencode(args)
+            content = urllib.urlencode(args)
             content_length = str(len(content))
 
         # assuming http and not https
@@ -172,6 +189,7 @@ class HTTPClient(object):
         request = line1 + line2 + line3 + line4 + line5 + line6 + content
 
         self.connect(parsed_url.hostname, port)
+
         self.sendall(request)
 
         # received = b""
@@ -186,6 +204,8 @@ class HTTPClient(object):
         code = self.get_code(received)
         body = self.get_body(received)
 
+        # print "\n==========sent:", request, "end"
+        # print "\n==========received:", received, "end"
         return HTTPResponse(code, body)
 
     def command(self, url, command="GET", args=None):
