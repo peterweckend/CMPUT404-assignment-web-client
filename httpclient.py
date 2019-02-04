@@ -117,6 +117,9 @@ class HTTPClient(object):
         code = self.get_code(received)
         body = self.get_body(received)
 
+        # "As a user when I GET or POST I want the result printed to stdout"
+        print(body)
+
         self.close()
 
         return HTTPResponse(code, body)
@@ -162,6 +165,9 @@ class HTTPClient(object):
 
         code = self.get_code(received)
         body = self.get_body(received)
+
+        # "As a user when I GET or POST I want the result printed to stdout"
+        print(body)
 
         self.close()
 
