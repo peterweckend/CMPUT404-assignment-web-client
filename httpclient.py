@@ -22,8 +22,13 @@ import sys
 import socket
 import re
 # you may use urllib to encode data appropriately
+
 import urllib.parse
 # from urllib.parse import urlparse
+
+
+
+
 
 def help():
     print("httpclient.py [GET/POST] [URL]\n")
@@ -35,15 +40,18 @@ class HTTPResponse(object):
 
 class HTTPClient(object):
 
-    # BUFF_SIZE = 4096
+    BUFF_SIZE = 4096
 
-    # client_socket = None
+    client_socket = None
 
     #def get_host_port(self,url):
 
     def connect(self, host, port):
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect((host, port))
+        # use sockets!
+        # print "val: ", host, port
+        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.client_socket.connect((host, port))
+        # print "made it out of connect"
 
         return None
 
@@ -58,6 +66,7 @@ class HTTPClient(object):
     def get_body(self, data):
         # print "BODY", data.split("\r\n\r\n")[1], "END"
         return data.split("\r\n\r\n")[1]
+
     
     def sendall(self, data):
         self.socket.sendall(data.encode('utf-8'))
@@ -91,6 +100,7 @@ class HTTPClient(object):
         except Exception:
             potential_port = None
 
+
         if parsed_url.path == "":
             path = "/"
         else:
@@ -102,7 +112,6 @@ class HTTPClient(object):
             potential_port = None
 
         # assuming http and not https
-
         if potential_port is None:
             line1 = "GET " + path + " HTTP/1.1\r\n"
             line2 = "Host: " + parsed_url.hostname + "\r\n"
@@ -140,7 +149,6 @@ class HTTPClient(object):
         # print "\n==========sent:", request, "end"
         # print "\n==========received:", received, "end"
 
-
         code = self.get_code(received)
         body = self.get_body(received)
 
@@ -149,7 +157,7 @@ class HTTPClient(object):
         return HTTPResponse(code, body)
 
     def POST(self, url, args=None):
-        parsed_url = urllib.parse.urlparse(url)
+        parsed_url = urlparse(url)
 
         if parsed_url.path == "":
             path = "/"
