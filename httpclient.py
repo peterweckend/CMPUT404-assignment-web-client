@@ -40,31 +40,25 @@ class HTTPResponse(object):
 
 class HTTPClient(object):
 
-    BUFF_SIZE = 4096
-
-    client_socket = None
-
-    #def get_host_port(self,url):
+    socket = None
 
     def connect(self, host, port):
         # use sockets!
-        # print "val: ", host, port
-        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.client_socket.connect((host, port))
-        # print "made it out of connect"
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.connect((host, port))
 
         return None
 
     def get_code(self, data):
-        # print "*****CODE", data.split(" ")[1], "END"
+        # print("*****CODE", data.split(" ")[1], "END")
         return int(data.split(" ")[1])
 
     def get_headers(self,data):
-        # todo: add stuff to this
+        # not necessary to implement for this assignment; not tested
         return None
 
     def get_body(self, data):
-        # print "BODY", data.split("\r\n\r\n")[1], "END"
+        # print("BODY", data.split("\r\n\r\n")[1], "END")
         return data.split("\r\n\r\n")[1]
 
     
@@ -126,28 +120,12 @@ class HTTPClient(object):
             port = potential_port
 
         request = line1 + line2 + line3 + line4
-
         self.connect(parsed_url.hostname, port)
-
         self.sendall(request)
-
-        # received = b""
-        #
-        # while True:
-        #     data = self.socket.recv(self.BUFF_SIZE)
-        #     if not data: break
-        #     received += data
-
-        # received = self.socket.recv(self.BUFF_SIZE)
-
         received = self.recvall(self.socket)
 
         # print("sent:", request, "end")
         # print("received:", received, "end")
-
-
-        # print "\n==========sent:", request, "end"
-        # print "\n==========received:", received, "end"
 
         code = self.get_code(received)
         body = self.get_body(received)
@@ -195,25 +173,15 @@ class HTTPClient(object):
             port = potential_port
 
         request = line1 + line2 + line3 + line4 + line5 + line6 + content
-
         self.connect(parsed_url.hostname, port)
-
         self.sendall(request)
-
-        # received = b""
-        # while True:
-        #     # print "in while"
-        #     data = self.client_socket.recv(self.BUFF_SIZE)
-        #     if not data: break
-        #     received += data
-
         received = self.recvall(self.socket)
 
         code = self.get_code(received)
         body = self.get_body(received)
 
-        # print "\n==========sent:", request, "end"
-        # print "\n==========received:", received, "end"
+        # print("\n==========sent:", request, "end")
+        # print("\n==========received:", received, "end")
         return HTTPResponse(code, body)
 
     def command(self, url, command="GET", args=None):
@@ -222,14 +190,15 @@ class HTTPClient(object):
         else:
             return self.GET( url, args )
 
+
 if __name__ == "__main__":
     client = HTTPClient()
     command = "GET"
-    if (len(sys.argv) <= 1):
+    if len(sys.argv) <= 1:
         help()
         sys.exit(1)
-    elif (len(sys.argv) == 3):
-        print(client.command( sys.argv[2], sys.argv[1] ))
+    elif len(sys.argv) == 3:
+        print(client.command(sys.argv[2], sys.argv[1]))
     else:
-        print(client.command( sys.argv[1] ))
+        print(client.command(sys.argv[1]))
 
