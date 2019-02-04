@@ -22,12 +22,7 @@ import sys
 import socket
 import re
 # you may use urllib to encode data appropriately
-
 import urllib.parse
-# from urllib.parse import urlparse
-
-
-
 
 
 def help():
@@ -50,7 +45,6 @@ class HTTPClient(object):
         return None
 
     def get_code(self, data):
-        # print("*****CODE", data.split(" ")[1], "END")
         return int(data.split(" ")[1])
 
     def get_headers(self,data):
@@ -58,7 +52,6 @@ class HTTPClient(object):
         return None
 
     def get_body(self, data):
-        # print("BODY", data.split("\r\n\r\n")[1], "END")
         return data.split("\r\n\r\n")[1]
 
     
@@ -90,10 +83,9 @@ class HTTPClient(object):
             path = parsed_url.path
 
         try:
-            potential_port = parsed_url.port
+            request_port = parsed_url.port
         except Exception:
-            potential_port = None
-
+            request_port = None
 
         if parsed_url.path == "":
             path = "/"
@@ -101,31 +93,26 @@ class HTTPClient(object):
             path = parsed_url.path
 
         try:
-            potential_port = parsed_url.port
+            request_port = parsed_url.port
         except Exception:
-            potential_port = None
+            request_port = None
+
+        line1 = "GET " + path + " HTTP/1.1\r\n"
+        line3 = "Accept: */*\r\n"
+        line4 = "Connection: close\r\n\r\n"
 
         # assuming http and not https
-        if potential_port is None:
-            line1 = "GET " + path + " HTTP/1.1\r\n"
+        if request_port is None:
             line2 = "Host: " + parsed_url.hostname + "\r\n"
-            line3 = "Accept: */*\r\n"
-            line4 = "Connection: close\r\n\r\n"
             port = 80
         else:
-            line1 = "GET " + path + " HTTP/1.1\r\n"
-            line2 = "Host: " + parsed_url.hostname + ":" + str(potential_port) + "\r\n"
-            line3 = "Accept: */*\r\n"
-            line4 = "Connection: close\r\n\r\n"
-            port = potential_port
+            line2 = "Host: " + parsed_url.hostname + ":" + str(request_port) + "\r\n"
+            port = request_port
 
         request = line1 + line2 + line3 + line4
         self.connect(parsed_url.hostname, port)
         self.sendall(request)
         received = self.recvall(self.socket)
-
-        # print("sent:", request, "end")
-        # print("received:", received, "end")
 
         code = self.get_code(received)
         body = self.get_body(received)
@@ -135,7 +122,7 @@ class HTTPClient(object):
         return HTTPResponse(code, body)
 
     def POST(self, url, args=None):
-        parsed_url = urlparse(url)
+        parsed_url = urllib.parse.urlparse(url)
 
         if parsed_url.path == "":
             path = "/"
@@ -143,34 +130,30 @@ class HTTPClient(object):
             path = parsed_url.path
 
         try:
-            potential_port = parsed_url.port
+            request_port = parsed_url.port
         except Exception:
-            potential_port = None
+            request_port = None
 
         if args is None:
             content = ""
             content_length = "0"
         else:
-            content = urllib.urlencode(args)
+            content = urllib.parse.urlencode(args)
             content_length = str(len(content))
 
+        line1 = "POST " + path + " HTTP/1.1\r\n"
+        line3 = "Accept: */*\r\n"
+        line4 = "Connection: close\r\n"
+        line5 = "Content-Type: application/x-www-form-urlencoded\r\n"
+        line6 = "Content-Length: " + content_length + "\r\n\r\n"
+
         # assuming http and not https
-        if potential_port is None:
-            line1 = "POST " + path + " HTTP/1.1\r\n"
+        if request_port is None:
             line2 = "Host: " + parsed_url.hostname + "\r\n"
-            line3 = "Accept: */*\r\n"
-            line4 = "Connection: close\r\n"
-            line5 = "Content-Type: application/x-www-form-urlencoded\r\n"
-            line6 = "Content-Length: " + content_length + "\r\n\r\n"
             port = 80
         else:
-            line1 = "POST " + path + " HTTP/1.1\r\n"
-            line2 = "Host: " + parsed_url.hostname + ":" + str(potential_port) + "\r\n"
-            line3 = "Accept: */*\r\n"
-            line4 = "Connection: close\r\n"
-            line5 = "Content-Type: application/x-www-form-urlencoded\r\n"
-            line6 = "Content-Length: " + content_length + "\r\n\r\n"
-            port = potential_port
+            line2 = "Host: " + parsed_url.hostname + ":" + str(request_port) + "\r\n"
+            port = request_port
 
         request = line1 + line2 + line3 + line4 + line5 + line6 + content
         self.connect(parsed_url.hostname, port)
@@ -180,8 +163,6 @@ class HTTPClient(object):
         code = self.get_code(received)
         body = self.get_body(received)
 
-        # print("\n==========sent:", request, "end")
-        # print("\n==========received:", received, "end")
         return HTTPResponse(code, body)
 
     def command(self, url, command="GET", args=None):
